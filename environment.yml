@@ -1,0 +1,17 @@
+name: spaceml
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - matplotlib
+  - scikit-learn
+  - pandas
+  - numpy
+  - astropy
+  - plotly
+  - scipy
+  - jupyter
+  - ipywidgets
+  - jupyterlab
+prefix: /home/isaac/miniconda3/envs/spaceml

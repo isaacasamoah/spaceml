@@ -1,0 +1,11 @@
+{
+    "python.defaultInterpreterPath": "~/miniconda3/envs/spaceml/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "jupyter.kernels.excludePythonEnvironments": [
+        "~/miniconda3/envs/spaceml/bin/python"
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:conda",
+    "python-envs.pythonProjects": []
+}
