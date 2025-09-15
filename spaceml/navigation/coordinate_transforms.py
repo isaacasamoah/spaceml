@@ -29,6 +29,16 @@ class Vector3D:
     def to_array(self) -> np.ndarray:
         """convert to NumPy array for matix operations."""
         return np.array([self.x, self.y, self.z])
+    
+@dataclass(frozen=True)
+class OrbitState:
+    position: Vector3D
+    velocity: Vector3D
+
+    def __post_init__(self):
+        """Validate position and velocity are in the same reference frame. """
+        if self.position.frame != self.velocity.frame:
+            raise ValueError("Position and velocity must be in the same reference frame")
 
 class CoordinateTransforms: 
     """Main interface for coorindate transformation using composition pattern"""
@@ -39,11 +49,11 @@ class CoordinateTransforms:
         self.transformations = {}
 
         # start with basic transformation
-        #self.register_default_transformations()
+        self._register_default_transformations()
 
     def _register_default_transformations(self):
         """Register the standard coordinate transformations."""
-        pass
+        self.transformations[(ReferenceFrame.ECI, ReferenceFrame.ECEF)] = EciToEcefTransform()
 
     def transform(self, vector: Vector3D, target_frame: ReferenceFrame) -> Vector3D:
         """Transform vecotr to target reference frame."""
@@ -101,7 +111,6 @@ class EciToEcefTransform:
 
 
 if __name__ == "__main__":
-    # Test vector ISS altitude ~408km
 
      # Test 1: Default timestamp behavior
     print("=== Testing Vector3D Timestamps ===")
@@ -122,14 +131,39 @@ if __name__ == "__main__":
     print(f"ISS position magnitude: {iss.magnitude:,.0f} meters")
     print(f"ISS timestamp: {iss.timestamp}")
 
-     # Test the transformation
+     # Test 4:  Test the transformation
     print("=== Testing ECI→ECEF Transformation ===")
     
     # Create ECI position
     eci_pos = Vector3D(6_778_000, 0, 0, ReferenceFrame.ECI)
     print(f"ECI: ({eci_pos.x/1e6:.3f}, {eci_pos.y/1e6:.3f}, {eci_pos.z/1e6:.3f}) Mm")
     
-    # Transform it
+    # Test transforming it usinig EcitoECefTransform directly
     transformer = EciToEcefTransform()
     ecef_pos = transformer.transform(eci_pos)
     print(f"ECEF: ({ecef_pos.x/1e6:.3f}, {ecef_pos.y/1e6:.3f}, {ecef_pos.z/1e6:.3f}) Mm")
+
+    # Tesst the complete system
+    transforms = CoordinateTransforms()
+    eci_pos = Vector3D(6_778_00,0, 0, ReferenceFrame.ECI)
+    ecef_pos = transforms.transform(eci_pos, ReferenceFrame.ECEF)
+
+    print(f"Registry transform worked! ECEF: ({ecef_pos.x/1e6:.3f}, {ecef_pos.y/1e-6:.3f},{ecef_pos.z}) Mm")
+
+    # Test OrbitState validation
+    print("=== Testing OrbitState Error Handling ===")
+    
+    try:
+        # This should work fine
+        pos = Vector3D(6_778_000, 0, 0, ReferenceFrame.ECI)
+        vel = Vector3D(0, 7_500, 0, ReferenceFrame.ECI)
+        orbit = OrbitState(pos, vel)
+        print("✅ Valid OrbitState created successfully")
+        
+        # This should raise an error
+        bad_vel = Vector3D(0, 7_500, 0, ReferenceFrame.ECEF)  # Different frame!
+        bad_orbit = OrbitState(pos, bad_vel)
+        print("❌ ERROR: Should have failed!")
+        
+    except ValueError as e:
+        print(f"✅ Caught expected error: {e}")
